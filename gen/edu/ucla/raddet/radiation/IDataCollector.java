@@ -1,6 +1,6 @@
 /*
  * This file is auto-generated.  DO NOT MODIFY.
- * Original file: C:\\Users\\Roman\\eclipse\\RadDet\\src\\edu\\ucla\\raddet\\radiation\\IDataCollector.aidl
+ * Original file: C:\\Users\\Owner\\csm117_project\\RadDet\\src\\edu\\ucla\\raddet\\radiation\\IDataCollector.aidl
  */
 package edu.ucla.raddet.radiation;
 //Android Interface Definition Language for DataCollector Service

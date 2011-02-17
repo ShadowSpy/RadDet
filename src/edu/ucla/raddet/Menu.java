@@ -27,7 +27,7 @@ public class Menu extends Activity {
 			}
 		}
 
-		@Override
+		//@Override
 		public void onServiceDisconnected(ComponentName className) {
 			dataCollector = null;
 		}
