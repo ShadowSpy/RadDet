@@ -19,7 +19,6 @@ public class DataCollector extends Service implements LocationListener{
 
 	public LocationManager locManager;
 	public static final int UPDATE_INTERVAL = 60000;	//Frequency of GPS location updates
-	public final DataCollector listener = this; 		//Pointer to self used to pass information to interface object
 	private File file = new File(getExternalFilesDir("raddet"), "output.txt");
 	
 	@Override
@@ -78,14 +77,14 @@ public class DataCollector extends Service implements LocationListener{
 	private final IDataCollector.Stub mBinder = new IDataCollector.Stub() {
 		public void startDataCollection() {
 			try {
-				locManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, UPDATE_INTERVAL, 0, listener);
+				locManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, UPDATE_INTERVAL, 0, DataCollector.this);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		}
 		
 		public void stopDataCollection() {
-			locManager.removeUpdates(listener);
+			locManager.removeUpdates(DataCollector.this);
 		}
 	};
 }
