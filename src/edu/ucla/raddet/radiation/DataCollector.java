@@ -12,6 +12,7 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.telephony.SignalStrength;
 
 
 //Android Service which collects radiation information, as well as GPS information
@@ -20,18 +21,32 @@ public class DataCollector extends Service implements LocationListener{
 	public LocationManager locManager;
 	public static final int UPDATE_INTERVAL = 60000;	//Frequency of GPS location updates
 	private File file = new File(getExternalFilesDir("raddet"), "output.txt");
+	//private SignalStrength sigstrength = new SignalStrength();
+	public SignalStrength sigstrength;
 	
-	@Override
+	//@Override
 	public void onCreate() {
 		locManager = (LocationManager) getSystemService(LOCATION_SERVICE);
 	}
 
 	//TODO: Austin--Write function and figure out what the return value should actually be
-	private void getRadiation() {
-	
+	public int getRadiation(SignalStrength sig) {
+		try{
+			PrintStream out = new PrintStream(new FileOutputStream(file));
+			
+			int strength = sig.getGsmSignalStrength();
+			String s = "Signal Strength:" + strength + " dB";
+			out.println(s);
+			return strength;
+		}
+		catch (FileNotFoundException e){
+			System.out.println("Could not open output file");
+			e.printStackTrace();
+		}
+		return 0;
 	}
 
-	@Override
+	//@Override
 	public void onLocationChanged(Location loc) {
 		try {
 			PrintStream out = new PrintStream(new FileOutputStream(file));
@@ -45,19 +60,19 @@ public class DataCollector extends Service implements LocationListener{
 		}
 	}
 
-	@Override
+	//@Override
 	public void onProviderDisabled(String provider) {
 		// TODO Auto-generated method stub
 		
 	}
 
-	@Override
+	//@Override
 	public void onProviderEnabled(String provider) {
 		// TODO Auto-generated method stub
 		
 	}
 
-	@Override
+	//@Override
 	public void onStatusChanged(String provider, int status, Bundle extras) {
 		// TODO Auto-generated method stub
 		
