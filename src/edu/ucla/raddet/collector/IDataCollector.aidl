@@ -1,4 +1,4 @@
-package edu.ucla.raddet.radiation;
+package edu.ucla.raddet.collector;
 
 //Android Interface Definition Language for DataCollector Service
 interface IDataCollector {
