@@ -14,8 +14,8 @@ public class Menu extends Activity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         tv = new TextView(this);
-        /*dataCollectorIntent = new Intent(this, DataCollector.class);
-        startService(dataCollectorIntent);*/
+        dataCollectorIntent = new Intent(this, DataCollector.class);
+        startService(dataCollectorIntent);
         
 		tv.setText("Service started!");
 	    setContentView(tv);
