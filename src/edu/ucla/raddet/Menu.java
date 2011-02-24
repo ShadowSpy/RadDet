@@ -3,16 +3,19 @@ package edu.ucla.raddet;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import edu.ucla.raddet.radiation.RadDetService;
 
 public class Menu extends Activity {
+	private static final String TAG = "Testing";
+	Button buttonStart, buttonStop;
 	
     @Override
     public void onCreate(Bundle savedInstanceState) {
-    
+        	
         super.onCreate(savedInstanceState);
         
         setContentView(R.layout.main);                      
@@ -21,10 +24,28 @@ public class Menu extends Activity {
         RadDetService.setMainActivity(this);
     	
         //creating an intent for the service
-        final Intent RadDetService = new Intent(this, RadDetService.class);
+        //final Intent RadDetService = new Intent(this, RadDetService.class);
+        
+        buttonStart = (Button) findViewById(R.id.buttonStart);
+        buttonStop = (Button) findViewById(R.id.buttonStop);
+
+        buttonStart.setOnClickListener(this);
+        buttonStop.setOnClickListener(this);
+        
+        public void onClick(View src) {
+            switch (src.getId()) {
+            case android.R.id.buttonStart:
+              Log.d(TAG, "onClick: starting srvice");
+              startService(new Intent(this, RadDetService.class));
+              break;
+            case android.R.id.buttonStop:
+              Log.d(TAG, "onClick: stopping srvice");
+              stopService(new Intent(this, RadDetService.class));
+              break;
+        }
         
         //start button
-        Button btnStart = (Button) findViewById(android.R.id.button1);
+        /*Button btnStart = (Button) findViewById(android.R.id.button1);
         //start button on click
         btnStart.setOnClickListener(new View.OnClickListener()
         {
@@ -51,13 +72,21 @@ public class Menu extends Activity {
                 //remove or hide the app
                 finish(); 
             }
-        });
+        });*/
         
         /*@Override 
         protected void onDestroy() {
               super.onDestroy();
         }*/
-        
+     
+    	String str;
+    	 
+    	str = "Starting Service";
+
+        //super.onCreate(savedInstanceState);
+        TextView tv = new TextView(this);
+        tv.setText(str);
+        setContentView(tv);
     }
 	
 

@@ -1,7 +1,10 @@
 package edu.ucla.raddet.radiation;
 
 import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.InputStreamReader;
+import java.io.PrintStream;
 import java.util.Hashtable;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -12,6 +15,7 @@ import android.app.Service;
 import android.content.Intent;
 import android.content.res.AssetManager;
 import android.os.IBinder;
+import android.telephony.SignalStrength;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -94,6 +98,8 @@ public class RadDetService extends Service
     {
         //do something whatever you want
         //TODO: we implement our stuff here    
+    	SignalStrength sigstrength;
+    	
     }
     
     
