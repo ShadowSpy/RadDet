@@ -7,7 +7,9 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintStream;
 
+import android.R.string;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.location.Location;
 import android.location.LocationListener;
@@ -15,6 +17,8 @@ import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.telephony.SignalStrength;
+import android.telephony.TelephonyManager;
+import android.telephony.PhoneStateListener;
 import android.util.Log;
 
 
@@ -26,18 +30,28 @@ public class DataCollector extends Service{
 	private LocationManager locManager;
 	private FileOutputStream fOut;
 	private OutputStreamWriter osw;
+	private Location loc;
+	private TelephonyManager Tel;
 	private SignalStrength sigstrength;
 	private static final String TAG = "DataCollector";
 
+	
 	private LocationListener locListener = new LocationListener() {
 		public void onLocationChanged(Location loc) {
+			
 			try {
-				
+				//Get Location
 				String s = "Coordinates: " + loc.getLatitude() + ", " + loc.getLongitude();
 				s += " at timestamp " + loc.getTime();
+				
+				//Get Signal Strength
+				/*int strength = sigstrength.getGsmSignalStrength();
+				String sstrength = "SIGNAL STRENGTH!!!:" + String.valueOf(strength);
+				Log.i(TAG, sstrength);*/
+										
 				osw.write(s);
 				Log.d(TAG, s);
-			} catch (IOException e) {
+			} catch (IOException e) {				
 				Log.e(TAG, "Could not open output file");
 				e.printStackTrace();
 			}
@@ -53,9 +67,16 @@ public class DataCollector extends Service{
 		}
 	};
 	
-	public void onCreate() {
+	public void onCreate() {	
+		
+		//GPS Signal Strength
+        //Tel = (TelephonyManager)getSystemService(Context.TELEPHONY_SERVICE);
+        //Tel.listen(MyListener ,PhoneStateListener.LISTEN_SIGNAL_STRENGTHS);
+		
+		//Location
 		locManager = (LocationManager) getSystemService(LOCATION_SERVICE);
-		locManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, UPDATE_INTERVAL, 0, locListener);
+		locManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, UPDATE_INTERVAL, 10, locListener);
+
 		try {
 			fOut = openFileOutput("samplefile.txt", MODE_WORLD_READABLE);
 		} catch (FileNotFoundException e) {
@@ -81,8 +102,12 @@ public class DataCollector extends Service{
 	//TODO: Austin--Write function and figure out what the return value should actually be
 	public int getRadiation(SignalStrength sig) {
 			int strength = sig.getGsmSignalStrength();
-			String s = "Signal Strength:" + strength + " dB";
 			return strength;
+	}
+	
+	public String getSig(SignalStrength sig){
+		String s = sig.getClass().getName() + '@' + Integer.toHexString(hashCode());
+		return s;
 	}
 	
 	public IBinder onBind(Intent intent) {

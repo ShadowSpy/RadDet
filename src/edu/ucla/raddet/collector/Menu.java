@@ -16,7 +16,7 @@ public class Menu extends Activity {
         tv = new TextView(this);
         dataCollectorIntent = new Intent(this, DataCollector.class);
         startService(dataCollectorIntent);
-        
+    
 		tv.setText("Service started!");
 	    setContentView(tv);
     }
