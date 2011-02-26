@@ -1,17 +1,16 @@
 package edu.ucla.raddet.collector;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.io.PrintStream;
 
 import android.app.Service;
 import android.content.Intent;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.location.LocationProvider;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.telephony.SignalStrength;
@@ -27,35 +26,63 @@ public class DataCollector extends Service{
 	private FileOutputStream fOut;
 	private OutputStreamWriter osw;
 	private SignalStrength sigstrength;
+	
+	private int gpsStatus;
+	private int networkStatus;
+	private Location bestLocation;
+	
 	private static final String TAG = "DataCollector";
 
 	private LocationListener locListener = new LocationListener() {
 		public void onLocationChanged(Location loc) {
-			try {
-				
-				String s = "Coordinates: " + loc.getLatitude() + ", " + loc.getLongitude();
-				s += " at timestamp " + loc.getTime();
-				osw.write(s);
-				Log.d(TAG, s);
-			} catch (IOException e) {
-				Log.e(TAG, "Could not open output file");
-				e.printStackTrace();
+			//Keep track of best location
+			//Having a location > no location
+			if (bestLocation == null)
+				bestLocation = loc;
+			//GPS Location > Network Location
+			else if (bestLocation.getProvider().equals(LocationManager.NETWORK_PROVIDER) &&
+					 loc.getProvider().equals(LocationManager.GPS_PROVIDER))
+				bestLocation = loc;
+			//More accuracy > Less accuracy
+			else if (bestLocation.getProvider().equals(loc.getProvider())) {
+				if (loc.getAccuracy() >= bestLocation.getAccuracy())
+					bestLocation = loc;
 			}
 		}
 		public void onProviderDisabled(String provider) {
-			// TODO Auto-generated method stub
 		}
 		public void onProviderEnabled(String provider) {
-			// TODO Auto-generated method stub
 		}
 		public void onStatusChanged(String provider, int status, Bundle extras) {
-			// TODO Auto-generated method stub
+			if (provider.equals(LocationManager.GPS_PROVIDER))
+				gpsStatus = status;
+			else if (provider.equals(LocationManager.NETWORK_PROVIDER))
+				networkStatus = status;
+			
+			if (gpsStatus == LocationProvider.TEMPORARILY_UNAVAILABLE ||
+			   (gpsStatus == LocationProvider.OUT_OF_SERVICE && 
+				networkStatus == LocationProvider.TEMPORARILY_UNAVAILABLE)) {
+				//Send best location update
+				if (bestLocation != null) {
+					try {
+						String s = "Coordinates: " + bestLocation.getLatitude() + ", " + bestLocation.getLongitude();
+						s += " at timestamp " + bestLocation.getTime();
+						osw.write(s);
+						Log.d(TAG, s);
+					} catch (IOException e) {
+						Log.e(TAG, "Could not open output file");
+						e.printStackTrace();
+					}
+				}
+				bestLocation = null;
+			}
 		}
 	};
 	
 	public void onCreate() {
 		locManager = (LocationManager) getSystemService(LOCATION_SERVICE);
 		locManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, UPDATE_INTERVAL, 0, locListener);
+		locManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, UPDATE_INTERVAL, 0, locListener);
 		try {
 			fOut = openFileOutput("samplefile.txt", MODE_WORLD_READABLE);
 		} catch (FileNotFoundException e) {
@@ -64,6 +91,7 @@ public class DataCollector extends Service{
 		}
 		osw = new OutputStreamWriter(fOut);
 		Log.i(TAG, "DataCollector started");
+		Menu.started = true;
 	}
 	
 	public void onDestroy() {
@@ -76,6 +104,7 @@ public class DataCollector extends Service{
 			e.printStackTrace();
 		}
 		Log.i(TAG, "DataCollector stopped");
+		Menu.started = false;
 	}
 
 	//TODO: Austin--Write function and figure out what the return value should actually be
