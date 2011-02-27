@@ -20,6 +20,7 @@ import android.telephony.SignalStrength;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.widget.TextView;
+import android.widget.Toast;
 
 
 //Android Service which collects radiation information, as well as GPS information
@@ -74,6 +75,7 @@ public class DataCollector extends Service{
 		public void onProviderEnabled(String provider) {
 		}
 		public void onStatusChanged(String provider, int status, Bundle extras) {
+			//super.onStatusChanged(provider, status, extras);
 			if (provider.equals(LocationManager.GPS_PROVIDER))
 				gpsStatus = status;
 			else if (provider.equals(LocationManager.NETWORK_PROVIDER))
@@ -90,6 +92,9 @@ public class DataCollector extends Service{
 						s += "Signal Strength: " + sig;
 						osw.write(s);
 						Log.d(TAG, s);
+						
+						Toast.makeText(getApplicationContext(), s, Toast.LENGTH_LONG).show();
+						
 					} catch (IOException e) {
 						Log.e(TAG, "Could not open output file");
 						e.printStackTrace();
