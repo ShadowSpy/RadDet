@@ -15,6 +15,7 @@ import android.location.LocationProvider;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.telephony.PhoneStateListener;
+import android.telephony.ServiceState;
 import android.telephony.SignalStrength;
 import android.telephony.TelephonyManager;
 import android.util.Log;
@@ -32,7 +33,7 @@ public class DataCollector extends Service{
 	private OutputStreamWriter osw;
 	private SignalStrength sigstrength;
 	
-	private int mGsmSignalStrength; // Valid values are (0-31, 99) as defined in TS 27.007 8.5
+	private int sig; // Valid values are (0-31, 99) as defined in TS 27.007 8.5
 	
 	private int gpsStatus;
 	private int networkStatus;
@@ -42,8 +43,10 @@ public class DataCollector extends Service{
 	
 	private PhoneStateListener signalListener = new PhoneStateListener() {
         public void onSignalStrengthsChanged(SignalStrength signalStrength) {
-             Log.i("Signal Strength: ",String.valueOf(signalStrength.getGsmSignalStrength()));
+        	sig = signalStrength.getGsmSignalStrength();
+        	//Log.i("Signal Strength: ",String.valueOf(sig));
         }
+        
     }; 
 
 	private LocationListener locListener = new LocationListener() {
@@ -83,7 +86,8 @@ public class DataCollector extends Service{
 				if (bestLocation != null) {
 					try {
 						String s = "Coordinates: " + bestLocation.getLatitude() + ", " + bestLocation.getLongitude();
-						s += " at timestamp " + bestLocation.getTime();
+						s += " at timestamp " + bestLocation.getTime() + "\n";
+						s += "Signal Strength: " + sig;
 						osw.write(s);
 						Log.d(TAG, s);
 					} catch (IOException e) {
