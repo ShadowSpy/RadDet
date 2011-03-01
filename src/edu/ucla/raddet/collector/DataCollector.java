@@ -15,25 +15,21 @@ import android.location.LocationProvider;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.telephony.PhoneStateListener;
-import android.telephony.ServiceState;
 import android.telephony.SignalStrength;
 import android.telephony.TelephonyManager;
 import android.util.Log;
-import android.widget.TextView;
 import android.widget.Toast;
 
 
 //Android Service which collects radiation information, as well as GPS information
 public class DataCollector extends Service{
 
-	public static final int UPDATE_INTERVAL = 100;	//Frequency of GPS location updates
+	public static final int UPDATE_INTERVAL = 60000;	//Frequency of GPS location updates
 		
 	private TelephonyManager Tel;
 	private LocationManager locManager;
 	private FileOutputStream fOut;
 	private OutputStreamWriter osw;
-	private SignalStrength sigstrength;
-	
 	private int sig; // Valid values are (0-31, 99) as defined in TS 27.007 8.5
 	
 	private int gpsStatus;
@@ -64,6 +60,7 @@ public class DataCollector extends Service{
 			else if (bestLocation.getProvider().equals(loc.getProvider())) {
 				if (loc.getAccuracy() >= bestLocation.getAccuracy())
 					bestLocation = loc;
+			Log.d(TAG, "Best location is currently: " + bestLocation.getLatitude() + ", " + bestLocation.getLongitude());
 			}
 			//Get Signal Strength
 			/*int strength = sigstrength.getGsmSignalStrength();
@@ -81,17 +78,19 @@ public class DataCollector extends Service{
 			else if (provider.equals(LocationManager.NETWORK_PROVIDER))
 				networkStatus = status;
 			
+			Log.d(TAG, "GPS: " + gpsStatus + " Network: " + networkStatus);
+			
 			if (gpsStatus == LocationProvider.TEMPORARILY_UNAVAILABLE ||
 			   (gpsStatus == LocationProvider.OUT_OF_SERVICE && 
 				networkStatus == LocationProvider.TEMPORARILY_UNAVAILABLE)) {
 				//Send best location update
 				if (bestLocation != null) {
 					try {
-						String s = "Coordinates: " + bestLocation.getLatitude() + ", " + bestLocation.getLongitude();
-						s += " at timestamp " + bestLocation.getTime() + "\n";
-						s += "Signal Strength: " + sig;
+						String s = bestLocation.getLatitude() + "," + bestLocation.getLongitude();
+						s += "," + bestLocation.getTime() + ",";
+						s += sig + "\n";
 						osw.write(s);
-						Log.d(TAG, s);
+						Log.i(TAG, s + "Latitude,Longitude,Time,Signal");
 						
 						Toast.makeText(getApplicationContext(), s, Toast.LENGTH_LONG).show();
 						
@@ -99,8 +98,8 @@ public class DataCollector extends Service{
 						Log.e(TAG, "Could not open output file");
 						e.printStackTrace();
 					}
+					bestLocation = null;
 				}
-				bestLocation = null;
 			}
 		}
 	};
@@ -115,7 +114,7 @@ public class DataCollector extends Service{
 		locManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, UPDATE_INTERVAL, 0, locListener);
 		locManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, UPDATE_INTERVAL, 0, locListener);
 		try {
-			fOut = openFileOutput("samplefile.txt", MODE_WORLD_READABLE);
+			fOut = openFileOutput("current.txt", MODE_WORLD_READABLE);
 		} catch (FileNotFoundException e) {
 			Log.e(TAG, "Could not open file output");
 			e.printStackTrace();
