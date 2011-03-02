@@ -4,7 +4,10 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.util.Calendar;
 
+import android.app.AlarmManager;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
@@ -28,6 +31,7 @@ public class DataCollector extends Service{
 		
 	private TelephonyManager Tel;
 	private LocationManager locManager;
+	private AlarmManager alarmManager;
 	private FileOutputStream fOut;
 	private OutputStreamWriter osw;
 
@@ -57,10 +61,10 @@ public class DataCollector extends Service{
 				bestLocation = loc;
 			//More accuracy > Less accuracy
 			else if (bestLocation.getProvider().equals(loc.getProvider())) {
-				if (loc.getAccuracy() >= bestLocation.getAccuracy())
+				if (loc.getAccuracy() <= bestLocation.getAccuracy())
 					bestLocation = loc;
-			Log.d(TAG, "Best location is currently: " + bestLocation.getLatitude() + ", " + bestLocation.getLongitude());
 			}
+			Log.d(TAG, "Best location is currently: " + bestLocation.getLatitude() + ", " + bestLocation.getLongitude());
 		}
 		public void onStatusChanged(String provider, int status, Bundle extras) {
 			//super.onStatusChanged(provider, status, extras);
@@ -111,7 +115,18 @@ public class DataCollector extends Service{
 		locManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, UPDATE_INTERVAL, 0, locListener);
 		locManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, UPDATE_INTERVAL, 0, locListener);
 		
+		//Set up alarm manager
+		alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+		
 		//Set up output file
+		boolean fileExists = false;;
+		for (String name : fileList()) {
+			if (name.equals("current.txt")) {
+				fileExists = true;
+				break;
+			}
+		}
+		
 		try {
 			fOut = openFileOutput("current.txt", MODE_WORLD_READABLE | MODE_APPEND);
 		} catch (FileNotFoundException e) {
@@ -119,6 +134,29 @@ public class DataCollector extends Service{
 			e.printStackTrace();
 		}
 		osw = new OutputStreamWriter(fOut);
+		
+		if (!fileExists) {
+			//Insert row header for CSV file
+			try {
+				osw.write("Lat,Long,Time,Signal\n");
+				osw.flush();
+				
+				//Set an alarm to send out the file
+				Calendar cal = Calendar.getInstance();	//Get current time
+				cal.set(Calendar.HOUR, 0);				//We only care about the actual date
+				cal.set(Calendar.MINUTE, 0);
+				cal.set(Calendar.SECOND, 0);
+				cal.add(Calendar.DAY_OF_MONTH, 1);		//Set calendar to midnight of tomorrow
+				
+				// Call the DataPrep receiver to send file at midnight of tomorrow
+				PendingIntent pi = PendingIntent.getBroadcast(this, 0, new Intent(this, DataPrep.class), 0);
+				alarmManager.set(AlarmManager.RTC, cal.getTimeInMillis(), pi);
+				Log.i(TAG, "Alarm set to send file on " + cal.get(Calendar.MONTH) + "/" + cal.get(Calendar.DAY_OF_MONTH));
+			} catch (IOException e) {
+				Log.e(TAG, "Could not open output file");
+				e.printStackTrace();
+			}
+		}
 		
 		Log.i(TAG, "DataCollector started");
 		Menu.started = true;	//Notify Activity that service has started
