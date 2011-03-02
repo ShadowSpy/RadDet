@@ -5,7 +5,6 @@
       android:versionName="1.0">
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"></uses-permission>
 
-
     <application android:icon="@drawable/icon" android:label="@string/app_name">
         <activity android:label="@string/app_name" android:name=".collector.Menu">
             <intent-filter>
@@ -15,7 +14,9 @@
         </activity>
         <service android:name=".collector.DataCollector"></service>
         <receiver android:name=".collector.DataPrep"></receiver>
-
     </application>
+
 	<uses-sdk android:minSdkVersion="8" />
+	<uses-permission android:name="android.permission.INTERNET" />
+
 </manifest>
