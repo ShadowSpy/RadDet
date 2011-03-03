@@ -1,5 +1,11 @@
 package edu.ucla.raddet.collector;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.OutputStreamWriter;
+import java.net.URL;
+
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
@@ -12,11 +18,12 @@ public class Menu extends Activity {
 	
 	public static boolean started = false;
 	
+	//RadDet Features
 	LinearLayout node;
     TextView tv;
     Button button;	//Turns the service on or off
     Intent dataCollectorIntent;
-	
+    
     /** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -44,6 +51,7 @@ public class Menu extends Activity {
         dataCollectorIntent = new Intent(this, DataCollector.class);
 
 	    setContentView(node);
+	    
     }
     
     private View.OnClickListener startListener = new View.OnClickListener() {
@@ -64,5 +72,5 @@ public class Menu extends Activity {
         	tv.setText("Service stopped");
         	button.setOnClickListener(startListener);
         }
-    };
+    };    
 }

@@ -1,9 +1,11 @@
 package edu.ucla.raddet.collector;
 
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.net.URL;
 import java.util.Calendar;
 
 import android.app.AlarmManager;
@@ -27,6 +29,7 @@ import android.widget.Toast;
 //Android Service which collects radiation information, as well as GPS information
 public class DataCollector extends Service{
 
+	//Service Features
 	public static final int UPDATE_INTERVAL = 60000;	//Frequency of GPS location updates
 		
 	private TelephonyManager Tel;
@@ -42,6 +45,19 @@ public class DataCollector extends Service{
 	
 	private static final String TAG = "RadDet";
 	
+    //Upload Features
+	URL connectURL;
+    String params;
+    String responseString;
+    String fileName;
+    byte[] dataToServer;  
+	
+    String pathToOurFile = "file_to_send.txt";
+    //Current IP Address
+    String urlServer = "http://192.168.110.121/handle_upload.php";
+    //Peter's Home IP Address
+    //String urlServer = "http://192.168.110.121/handle_upload.php";
+    
 	private PhoneStateListener signalListener = new PhoneStateListener() {
         public void onSignalStrengthsChanged(SignalStrength signalStrength) {
         	sig = signalStrength.getGsmSignalStrength();
@@ -82,14 +98,22 @@ public class DataCollector extends Service{
 				if (bestLocation != null) {
 					try {
 						String s = bestLocation.getLatitude() + "," + bestLocation.getLongitude();
-						s += "," + bestLocation.getTime() + ",";
-						s += sig + "\n";
+						s += "," + sig + ",";
+						s += bestLocation.getTime() + "\n";
 						osw.write(s);
 						osw.flush();
-						Log.i(TAG, "(Latitude,Longitude,Time,Signal)" + s);
+						Log.i(TAG, "(Latitude,Longitude,Signal,Time)" + s);
 						
-						Toast.makeText(getApplicationContext(), "(Latitude,Longitude,Time,Signal)" + s, Toast.LENGTH_LONG).show();
+						Toast.makeText(getApplicationContext(), "(Latitude,Longitude,Signal,Time)" + s, Toast.LENGTH_LONG).show();
 						
+						//Calendar cal = Calendar.getInstance();
+						//if(cal.get(Calendar.HOUR)== 5 && cal.get(Calendar.MINUTE)== 0 && cal.get(Calendar.SECOND)== 0 && cal.get(Calendar.DAY_OF_MONTH)== 2)
+						//if(cal.get(Calendar.HOUR)== 5)
+						{						
+							Log.i(TAG, "Sending data to server...");
+							Toast.makeText(getApplicationContext(), "Sending data to server...", Toast.LENGTH_LONG).show();
+							uploadFile("current.txt", urlServer);
+						}
 					} catch (IOException e) {
 						Log.e(TAG, "Could not open output file");
 						e.printStackTrace();
@@ -101,7 +125,30 @@ public class DataCollector extends Service{
 
 		// Functions declared for sake of interface satisfaction
 		public void onProviderDisabled(String provider) {}
-		public void onProviderEnabled(String provider) {}
+		public void onProviderEnabled(String provider) {
+			/*try {
+				String s = bestLocation.getLatitude() + "," + bestLocation.getLongitude();
+				s += "," + sig + ",";
+				s += bestLocation.getTime() + "\n";
+				osw.write(s);
+				osw.flush();
+				Log.i(TAG, "(Latitude,Longitude,Signal,Time)" + s);
+				
+				Toast.makeText(getApplicationContext(), "(Latitude,Longitude,Signal,Time)" + s, Toast.LENGTH_LONG).show();
+				
+				//Calendar cal = Calendar.getInstance();
+				//if(cal.get(Calendar.HOUR)== 5 && cal.get(Calendar.MINUTE)== 0 && cal.get(Calendar.SECOND)== 0 && cal.get(Calendar.DAY_OF_MONTH)== 2)
+				//if(cal.get(Calendar.HOUR)== 5)
+				{						
+					Log.i(TAG, "Sending data to server...");
+					Toast.makeText(getApplicationContext(), "Sending data to server...", Toast.LENGTH_LONG).show();
+					uploadFile("current.txt", urlServer);
+				}
+			} catch (IOException e) {
+				Log.e(TAG, "Could not open output file");
+				e.printStackTrace();
+			}*/
+		}
 	};
 	
 	public void onCreate() {
@@ -117,7 +164,7 @@ public class DataCollector extends Service{
 		
 		//Set up alarm manager
 		alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
-		
+			
 		//Set up output file
 		boolean fileExists = false;;
 		for (String name : fileList()) {
@@ -138,7 +185,7 @@ public class DataCollector extends Service{
 		if (!fileExists) {
 			//Insert row header for CSV file
 			try {
-				osw.write("Lat,Long,Time,Signal\n");
+				osw.write("Lat,Long,Signal,Time\n");
 				osw.flush();
 				
 				//Set an alarm to send out the file
@@ -157,7 +204,7 @@ public class DataCollector extends Service{
 				e.printStackTrace();
 			}
 		}
-		
+				
 		Log.i(TAG, "DataCollector started");
 		Menu.started = true;	//Notify Activity that service has started
 	}
@@ -176,5 +223,15 @@ public class DataCollector extends Service{
 	
 	public IBinder onBind(Intent intent) {
 		return null;
+	}
+	
+	public void uploadFile(String filename, String url){
+		try {
+			FileInputStream fis = openFileInput(filename);
+			HttpFileUploader htfu = new HttpFileUploader(url,"noparamshere", filename);
+			htfu.doStart(fis, filename);
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}
 	}
 }
