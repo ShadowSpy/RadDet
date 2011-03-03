@@ -28,12 +28,12 @@ public class Menu extends Activity {
         node.setOrientation(LinearLayout.VERTICAL);
         
         if (started) {
-			tv.setText("Service is started");
+			tv.setText("Service started");
 	        button.setText("Stop");
 	    	button.setOnClickListener(stopListener);
         }
         else {
-			tv.setText("Service is stopped");
+			tv.setText("Service stopped");
 	        button.setText("Start");
 	    	button.setOnClickListener(startListener);
         }
@@ -51,7 +51,7 @@ public class Menu extends Activity {
         	tv.setText("Please wait...");
         	startService(dataCollectorIntent);
         	button.setText("Stop");
-        	tv.setText("Service is started");
+        	tv.setText("Service started");
         	button.setOnClickListener(stopListener);
         }
     };
@@ -61,7 +61,7 @@ public class Menu extends Activity {
         	tv.setText("Please wait...");
         	stopService(dataCollectorIntent);
         	button.setText("Start");
-        	tv.setText("Service is stopped");
+        	tv.setText("Service stopped");
         	button.setOnClickListener(startListener);
         }
     };
