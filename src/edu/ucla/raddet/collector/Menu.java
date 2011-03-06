@@ -1,11 +1,5 @@
 package edu.ucla.raddet.collector;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.OutputStreamWriter;
-import java.net.URL;
-
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;

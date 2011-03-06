@@ -16,7 +16,6 @@ import android.content.Intent;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
-import android.location.LocationProvider;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -41,8 +40,6 @@ public class DataCollector extends Service{
 	private FileOutputStream fOut;
 	private OutputStreamWriter osw;
 
-	private int gpsStatus;
-	private int networkStatus;
 	private double sig; // Valid values are 0-10
 	private Location bestLocation;
 	
@@ -97,102 +94,12 @@ public class DataCollector extends Service{
 					bestLocation = loc;
 			}
 			Log.d(TAG, "Best location is currently: " + bestLocation.getLatitude() + ", " + bestLocation.getLongitude() + " Type of network: " + bestLocation.getProvider());
-			Calendar cal = Calendar.getInstance();
-			//if(cal.get(Calendar.HOUR)== 5 && cal.get(Calendar.MINUTE)== 0 && cal.get(Calendar.SECOND)== 0 && cal.get(Calendar.DAY_OF_MONTH)== 2)
-			if((cal.get(Calendar.SECOND)>= 0 && cal.get(Calendar.SECOND)<= 10) || (cal.get(Calendar.SECOND)>= 20 && cal.get(Calendar.SECOND)<= 30) || (cal.get(Calendar.SECOND)>= 40 && cal.get(Calendar.SECOND)<= 50))
-			{	
-				try {
-					String s = bestLocation.getLatitude() + "," + bestLocation.getLongitude();
-					s += "," + sig + ",";
-					s += bestLocation.getTime() + "\n";
-					osw.write(s);
-					osw.flush();
-					Log.i(TAG, "(Latitude,Longitude,Signal,Time)" + s);
-					
-					//Toast.makeText(getApplicationContext(), "(Latitude,Longitude,Signal,Time)" + s, Toast.LENGTH_LONG).show();
-					
-					//Calendar cal = Calendar.getInstance();
-					//if(cal.get(Calendar.HOUR)== 5 && cal.get(Calendar.MINUTE)== 0 && cal.get(Calendar.SECOND)== 0 && cal.get(Calendar.DAY_OF_MONTH)== 2)
-					//if(cal.get(Calendar.HOUR)== 5)
-					{						
-						Log.i(TAG, "Sending data to server...");
-						Toast.makeText(getApplicationContext(), "Sending data to server...", Toast.LENGTH_LONG).show();
-						uploadFile("current.txt", urlServer);
-					}
-				} catch (IOException e) {
-					Log.e(TAG, "Could not open output file");
-					e.printStackTrace();
-				}
-				//bestLocation = null;
-			}
-		}
-		public void onStatusChanged(String provider, int status, Bundle extras) {
-			//super.onStatusChanged(provider, status, extras);
-			if (provider.equals(LocationManager.GPS_PROVIDER))
-				gpsStatus = status;
-			else if (provider.equals(LocationManager.NETWORK_PROVIDER))
-				networkStatus = status;
-			
-			Log.d(TAG, "GPS: " + gpsStatus + " Network: " + networkStatus);
-			
-			if (gpsStatus == LocationProvider.TEMPORARILY_UNAVAILABLE ||
-			   (gpsStatus == LocationProvider.OUT_OF_SERVICE && 
-				networkStatus == LocationProvider.TEMPORARILY_UNAVAILABLE)) {
-				//Send best location update
-				if (bestLocation != null) {
-					try {
-						String s = bestLocation.getLatitude() + "," + bestLocation.getLongitude();
-						s += "," + sig + ",";
-						s += bestLocation.getTime() + "\n";
-						osw.write(s);
-						osw.flush();
-						Log.i(TAG, "(Latitude,Longitude,Signal,Time)" + s);
-						
-						Toast.makeText(getApplicationContext(), "(Latitude,Longitude,Signal,Time)" + s, Toast.LENGTH_LONG).show();
-						
-						//Calendar cal = Calendar.getInstance();
-						//if(cal.get(Calendar.HOUR)== 5 && cal.get(Calendar.MINUTE)== 0 && cal.get(Calendar.SECOND)== 0 && cal.get(Calendar.DAY_OF_MONTH)== 2)
-						//if(cal.get(Calendar.HOUR)== 5)
-						{						
-							Log.i(TAG, "Sending data to server...");
-							Toast.makeText(getApplicationContext(), "Sending data to server...", Toast.LENGTH_LONG).show();
-							uploadFile("current.txt", urlServer);
-						}
-					} catch (IOException e) {
-						Log.e(TAG, "Could not open output file");
-						e.printStackTrace();
-					}
-					bestLocation = null;
-				}
-			}
 		}
 
 		// Functions declared for sake of interface satisfaction
+		public void onStatusChanged(String provider, int status, Bundle extras) {}
 		public void onProviderDisabled(String provider) {}
-		public void onProviderEnabled(String provider) {
-			/*try {
-				String s = bestLocation.getLatitude() + "," + bestLocation.getLongitude();
-				s += "," + sig + ",";
-				s += bestLocation.getTime() + "\n";
-				osw.write(s);
-				osw.flush();
-				Log.i(TAG, "(Latitude,Longitude,Signal,Time)" + s);
-				
-				Toast.makeText(getApplicationContext(), "(Latitude,Longitude,Signal,Time)" + s, Toast.LENGTH_LONG).show();
-				
-				//Calendar cal = Calendar.getInstance();
-				//if(cal.get(Calendar.HOUR)== 5 && cal.get(Calendar.MINUTE)== 0 && cal.get(Calendar.SECOND)== 0 && cal.get(Calendar.DAY_OF_MONTH)== 2)
-				//if(cal.get(Calendar.HOUR)== 5)
-				{						
-					Log.i(TAG, "Sending data to server...");
-					Toast.makeText(getApplicationContext(), "Sending data to server...", Toast.LENGTH_LONG).show();
-					uploadFile("current.txt", urlServer);
-				}
-			} catch (IOException e) {
-				Log.e(TAG, "Could not open output file");
-				e.printStackTrace();
-			}*/
-		}
+		public void onProviderEnabled(String provider) {}
 	};
 	
 	public void onCreate() {
@@ -214,12 +121,36 @@ public class DataCollector extends Service{
 					// Turns on the location providers
 					locManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locListener);
 					locManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, locListener);
+					bestLocation = locManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
 					handler.sendEmptyMessageDelayed(0, 5000);	// Receive locations for five seconds
 				}
 				else {
+					// Check if we have location
+					if (bestLocation == null) {
+						handler.sendEmptyMessageDelayed(0, 10000);
+						return true;
+					}
+					
 					// Turns off the location providers
 					locManager.removeUpdates(locListener);
 					handler.sendEmptyMessageDelayed(1, 55000);	// Wait 55 seconds before turning on again
+					
+					//Submit data to server
+					String s = bestLocation.getLatitude() + "," + bestLocation.getLongitude();
+					s += "," + sig + ",";
+					s += bestLocation.getTime() + "\n";
+					try {
+						osw.write(s);
+						osw.flush();
+					} catch (IOException e) {
+						Log.e(TAG, "Problem with file writing");
+						e.printStackTrace();
+					}
+					Log.i(TAG, "(Latitude,Longitude,Signal,Time)" + s);
+					
+					Log.i(TAG, "Sending data to server...");
+					Toast.makeText(getApplicationContext(), "Sending data to server...", Toast.LENGTH_LONG).show();
+					uploadFile("current.txt", urlServer);
 				}
 				return true;
 			}}
