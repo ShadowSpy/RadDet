@@ -62,7 +62,7 @@ public class DataCollector extends Service{
     
 	private PhoneStateListener signalListener = new PhoneStateListener() {
         public void onSignalStrengthsChanged(SignalStrength signalStrength) {
-        	int p = signalStrength.getCdmaDbm();
+        	double p = signalStrength.getCdmaDbm();
         	
         	if(p > -80)
         		sig = 10;
@@ -70,10 +70,9 @@ public class DataCollector extends Service{
         		sig = 0;
         	else
         	{
-        		double power = Math.pow(10,((p-30)/10));
-        		sig = ((power-(Math.pow(10,-12)))/(9*Math.pow(10,-12))*10);
+        		double power = java.lang.Math.pow(10,((p-30)/10));
+        		sig = ((power-(java.lang.Math.pow(10,-12)))/(9*java.lang.Math.pow(10,-12)))*10;
         	}
-        	
         	Log.d(TAG, "New Signal Strength: " + p + " dBm" + "& " + sig + " ratio");
         }
     }; 
