@@ -43,7 +43,7 @@ public class DataCollector extends Service{
 
 	private int gpsStatus;
 	private int networkStatus;
-	private int sig; // Valid values are (0-31, 99) as defined in TS 27.007 8.5
+	private double sig; // Valid values are 0-10
 	private Location bestLocation;
 	
 	private static final String TAG = "RadDet";
@@ -65,8 +65,19 @@ public class DataCollector extends Service{
     
 	private PhoneStateListener signalListener = new PhoneStateListener() {
         public void onSignalStrengthsChanged(SignalStrength signalStrength) {
-        	sig = signalStrength.getGsmSignalStrength();
-        	Log.d(TAG, "New Signal Strength: " +sig);
+        	int p = signalStrength.getCdmaDbm();
+        	
+        	if(p > -80)
+        		sig = 10;
+        	else if(p < -90)
+        		sig = 0;
+        	else
+        	{
+        		double power = Math.pow(10,((p-30)/10));
+        		sig = ((power-(Math.pow(10,-12)))/(9*Math.pow(10,-12))*10);
+        	}
+        	
+        	Log.d(TAG, "New Signal Strength: " + p + " dBm" + "& " + sig + " ratio");
         }
     }; 
 
@@ -89,10 +100,30 @@ public class DataCollector extends Service{
 			Calendar cal = Calendar.getInstance();
 			//if(cal.get(Calendar.HOUR)== 5 && cal.get(Calendar.MINUTE)== 0 && cal.get(Calendar.SECOND)== 0 && cal.get(Calendar.DAY_OF_MONTH)== 2)
 			if((cal.get(Calendar.SECOND)>= 0 && cal.get(Calendar.SECOND)<= 10) || (cal.get(Calendar.SECOND)>= 20 && cal.get(Calendar.SECOND)<= 30) || (cal.get(Calendar.SECOND)>= 40 && cal.get(Calendar.SECOND)<= 50))
-			{						
-				Log.i(TAG, "Sending data to server...");
-				Toast.makeText(getApplicationContext(), "Sending data to server...", Toast.LENGTH_LONG).show();
-				uploadFile("current.txt", urlServer);
+			{	
+				try {
+					String s = bestLocation.getLatitude() + "," + bestLocation.getLongitude();
+					s += "," + sig + ",";
+					s += bestLocation.getTime() + "\n";
+					osw.write(s);
+					osw.flush();
+					Log.i(TAG, "(Latitude,Longitude,Signal,Time)" + s);
+					
+					//Toast.makeText(getApplicationContext(), "(Latitude,Longitude,Signal,Time)" + s, Toast.LENGTH_LONG).show();
+					
+					//Calendar cal = Calendar.getInstance();
+					//if(cal.get(Calendar.HOUR)== 5 && cal.get(Calendar.MINUTE)== 0 && cal.get(Calendar.SECOND)== 0 && cal.get(Calendar.DAY_OF_MONTH)== 2)
+					//if(cal.get(Calendar.HOUR)== 5)
+					{						
+						Log.i(TAG, "Sending data to server...");
+						Toast.makeText(getApplicationContext(), "Sending data to server...", Toast.LENGTH_LONG).show();
+						uploadFile("current.txt", urlServer);
+					}
+				} catch (IOException e) {
+					Log.e(TAG, "Could not open output file");
+					e.printStackTrace();
+				}
+				//bestLocation = null;
 			}
 		}
 		public void onStatusChanged(String provider, int status, Bundle extras) {
