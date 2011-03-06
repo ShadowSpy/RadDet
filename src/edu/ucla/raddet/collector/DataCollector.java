@@ -54,9 +54,10 @@ public class DataCollector extends Service{
 	
     String pathToOurFile = "file_to_send.txt";
     //Current IP Address
-    String urlServer = "http://192.168.110.121/handle_upload.php";
-    //Peter's Home IP Address
     //String urlServer = "http://192.168.110.121/handle_upload.php";
+    
+    //Peter's Home IP Address
+    String urlServer = "http://192.168.0.197/handle_upload.php";
     
 	private PhoneStateListener signalListener = new PhoneStateListener() {
         public void onSignalStrengthsChanged(SignalStrength signalStrength) {
