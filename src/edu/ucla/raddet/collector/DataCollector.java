@@ -127,7 +127,7 @@ public class DataCollector extends Service{
 		// Functions declared for sake of interface satisfaction
 		public void onProviderDisabled(String provider) {}
 		public void onProviderEnabled(String provider) {
-			/*try {
+			try {
 				String s = bestLocation.getLatitude() + "," + bestLocation.getLongitude();
 				s += "," + sig + ",";
 				s += bestLocation.getTime() + "\n";
@@ -148,7 +148,7 @@ public class DataCollector extends Service{
 			} catch (IOException e) {
 				Log.e(TAG, "Could not open output file");
 				e.printStackTrace();
-			}*/
+			}
 		}
 	};
 	
