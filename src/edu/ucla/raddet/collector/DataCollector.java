@@ -30,7 +30,7 @@ import android.widget.Toast;
 public class DataCollector extends Service{
 
 	//Service Features
-	public static final int UPDATE_INTERVAL = 60000;	//Frequency of GPS location updates
+	public static final long UPDATE_INTERVAL = 30000L;	//Frequency of GPS location updates
 		
 	private TelephonyManager Tel;
 	private LocationManager locManager;
@@ -57,7 +57,8 @@ public class DataCollector extends Service{
     //String urlServer = "http://192.168.110.121/handle_upload.php";
     
     //Peter's Home IP Address
-    String urlServer = "http://192.168.0.197/handle_upload.php";
+    String urlServer = "http://76.89.156.78/handle_upload.php";
+    //String urlServer = "http://192.168.0.197/handle_upload.php";
     
 	private PhoneStateListener signalListener = new PhoneStateListener() {
         public void onSignalStrengthsChanged(SignalStrength signalStrength) {
@@ -81,7 +82,15 @@ public class DataCollector extends Service{
 				if (loc.getAccuracy() <= bestLocation.getAccuracy())
 					bestLocation = loc;
 			}
-			Log.d(TAG, "Best location is currently: " + bestLocation.getLatitude() + ", " + bestLocation.getLongitude());
+			Log.d(TAG, "Best location is currently: " + bestLocation.getLatitude() + ", " + bestLocation.getLongitude() + " Type of network: " + bestLocation.getProvider());
+			Calendar cal = Calendar.getInstance();
+			//if(cal.get(Calendar.HOUR)== 5 && cal.get(Calendar.MINUTE)== 0 && cal.get(Calendar.SECOND)== 0 && cal.get(Calendar.DAY_OF_MONTH)== 2)
+			if((cal.get(Calendar.SECOND)>= 0 && cal.get(Calendar.SECOND)<= 10) || (cal.get(Calendar.SECOND)>= 20 && cal.get(Calendar.SECOND)<= 30) || (cal.get(Calendar.SECOND)>= 40 && cal.get(Calendar.SECOND)<= 50))
+			{						
+				Log.i(TAG, "Sending data to server...");
+				Toast.makeText(getApplicationContext(), "Sending data to server...", Toast.LENGTH_LONG).show();
+				uploadFile("current.txt", urlServer);
+			}
 		}
 		public void onStatusChanged(String provider, int status, Bundle extras) {
 			//super.onStatusChanged(provider, status, extras);
@@ -127,7 +136,7 @@ public class DataCollector extends Service{
 		// Functions declared for sake of interface satisfaction
 		public void onProviderDisabled(String provider) {}
 		public void onProviderEnabled(String provider) {
-			try {
+			/*try {
 				String s = bestLocation.getLatitude() + "," + bestLocation.getLongitude();
 				s += "," + sig + ",";
 				s += bestLocation.getTime() + "\n";
@@ -148,7 +157,7 @@ public class DataCollector extends Service{
 			} catch (IOException e) {
 				Log.e(TAG, "Could not open output file");
 				e.printStackTrace();
-			}
+			}*/
 		}
 	};
 	
