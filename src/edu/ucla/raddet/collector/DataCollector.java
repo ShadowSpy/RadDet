@@ -18,7 +18,9 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.location.LocationProvider;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Message;
 import android.telephony.PhoneStateListener;
 import android.telephony.SignalStrength;
 import android.telephony.TelephonyManager;
@@ -35,6 +37,7 @@ public class DataCollector extends Service{
 	private TelephonyManager Tel;
 	private LocationManager locManager;
 	private AlarmManager alarmManager;
+	private Handler handler;
 	private FileOutputStream fOut;
 	private OutputStreamWriter osw;
 
@@ -169,11 +172,27 @@ public class DataCollector extends Service{
 		
         //Set up location manager
 		locManager = (LocationManager) getSystemService(LOCATION_SERVICE);
-		locManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, UPDATE_INTERVAL, 0, locListener);
-		locManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, UPDATE_INTERVAL, 0, locListener);
 		
 		//Set up alarm manager
 		alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+		
+		//Set up handler
+		handler = new Handler(new Handler.Callback() {
+			public boolean handleMessage(Message msg) {
+				if (msg.what == 1) {
+					// Turns on the location providers
+					locManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locListener);
+					locManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, locListener);
+					handler.sendEmptyMessageDelayed(0, 5000);	// Receive locations for five seconds
+				}
+				else {
+					// Turns off the location providers
+					locManager.removeUpdates(locListener);
+					handler.sendEmptyMessageDelayed(1, 55000);	// Wait 55 seconds before turning on again
+				}
+				return true;
+			}}
+		);
 			
 		//Set up output file
 		boolean fileExists = false;;
@@ -215,6 +234,8 @@ public class DataCollector extends Service{
 			}
 		}
 				
+		//Initialize handler
+		handler.sendEmptyMessage(1);
 		Log.i(TAG, "DataCollector started");
 		Menu.started = true;	//Notify Activity that service has started
 	}
