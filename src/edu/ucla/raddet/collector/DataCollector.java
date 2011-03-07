@@ -53,8 +53,8 @@ public class DataCollector extends Service{
     String fileName;
     byte[] dataToServer;  
 	
-    String logFile = "current.txt";
-    String sendFile = "Data1.txt";
+    String logFile = "temp.txt";
+    String sendFile = "received.txt";
     //Current IP Address
     //String urlServer = "http://192.168.110.121/handle_upload.php";
     
