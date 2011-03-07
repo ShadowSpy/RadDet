@@ -41,7 +41,7 @@ public class HttpFileUploader{
 		String lineEnd = "\r\n";
 		String twoHyphens = "--";
 		String boundary = "*****";
-		String Tag="3rd";
+		String Tag="RadDet";
 		try
 		{
 			//------------------ CLIENT REQUEST
