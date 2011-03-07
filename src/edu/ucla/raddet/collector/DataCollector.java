@@ -1,5 +1,6 @@
 package edu.ucla.raddet.collector;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -43,7 +44,7 @@ public class DataCollector extends Service{
 	private Location lastLocation;
 	private boolean isFirstUpdate;
 	
-	private static final String TAG = "RadDet";
+	public static final String TAG = "RadDet";
 	
     //Upload Features
 	URL connectURL;
@@ -71,8 +72,8 @@ public class DataCollector extends Service{
         	else
         	{
         		double power = java.lang.Math.pow(10,((p-30)/10));
-        		double lower = -78;
-        		double upper = -98;
+        		double upper = -78;
+        		double lower = -98;
         		//sig = ((power-(java.lang.Math.pow(10,-12)))/(9*java.lang.Math.pow(10,-12)))*10;
         		sig = 10*((power-(java.lang.Math.pow(10,(lower-30)/10)))/(java.lang.Math.pow(10,(upper-30)/10)-java.lang.Math.pow(10,(lower-30)/10)));
         	}
@@ -148,6 +149,7 @@ public class DataCollector extends Service{
 					try {
 						osw.write(s);
 						osw.flush();
+						Log.d(TAG, "New location added to file");
 						Toast.makeText(getApplicationContext(), "New location added to file", Toast.LENGTH_LONG).show();
 					} catch (IOException e) {
 						Log.e(TAG, "Problem with file writing");
@@ -157,7 +159,12 @@ public class DataCollector extends Service{
 					
 					Log.i(TAG, "Sending data to server...");
 					Toast.makeText(getApplicationContext(), "Sending data to server...", Toast.LENGTH_LONG).show();
-					uploadFile("current.txt", urlServer);
+					File currentFile = new File(getApplicationContext().getFilesDir(),"current.txt");		
+					File newPath = new File(getApplicationContext().getFilesDir(), "temp.txt");
+					
+					// Rename current.txt file to a new file
+					currentFile.renameTo(newPath);
+					uploadFile("temp.txt", urlServer);
 					
 					//Set last location
 					lastLocation = bestLocation;
@@ -177,6 +184,7 @@ public class DataCollector extends Service{
 		
 		try {
 			fOut = openFileOutput("current.txt", MODE_WORLD_READABLE);
+			Log.d(TAG, "File Created");
 		} catch (FileNotFoundException e) {
 			Log.e(TAG, "Could not open file output");
 			e.printStackTrace();
@@ -214,12 +222,15 @@ public class DataCollector extends Service{
 	
 	public void onDestroy() {
 		locManager.removeUpdates(locListener);
+		Tel.listen(signalListener,PhoneStateListener.LISTEN_NONE);
 		try {
 			osw.close();
 		} catch (IOException e) {
 			Log.e(TAG, "Could not close file writer");
 			e.printStackTrace();
 		}
+		handler.removeMessages(1);
+		handler.removeMessages(0);
 		Log.i(TAG, "DataCollector stopped");
 		Menu.started = false;	//Notify Activity that service has stopped
 	}
@@ -236,5 +247,10 @@ public class DataCollector extends Service{
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		}
+		catch(IOException ioe)
+		{
+			//uploadFile(filename, url);
+		}
+		
 	}
 }

@@ -30,23 +30,18 @@ public class HttpFileUploader{
 
 	}
 
-	void doStart(FileInputStream stream, String filename){ 
+	void doStart(FileInputStream stream, String filename) throws IOException{ 
 		fileInputStream = stream;
-		thirdTry(filename);
-	} 
-
-	void thirdTry(String filename){
 		String exsistingFileName = filename;
 
 		String lineEnd = "\r\n";
 		String twoHyphens = "--";
 		String boundary = "*****";
-		String Tag="RadDet";
 		try
 		{
 			//------------------ CLIENT REQUEST
 
-			Log.e(Tag,"Starting to bad things");
+			Log.i(DataCollector.TAG, "Upload Started");
 			// Open a HTTP connection to the URL
 			HttpURLConnection conn = (HttpURLConnection) connectURL.openConnection();
 
@@ -72,8 +67,7 @@ public class HttpFileUploader{
 			dos.writeBytes("Content-Disposition: form-data; name=\"uploadedfile\";filename=\"" + exsistingFileName +"\"" + lineEnd);
 			dos.writeBytes(lineEnd);
 
-
-			Log.e(Tag,"Headers are written");
+			Log.i(DataCollector.TAG, "Headers are written");
 
 			// create a buffer of maximum size
 
@@ -100,7 +94,7 @@ public class HttpFileUploader{
 			dos.writeBytes(twoHyphens + boundary + twoHyphens + lineEnd);
 
 			// close streams
-			Log.e(Tag,"File is written");
+			Log.i(DataCollector.TAG, "File is written");
 			fileInputStream.close();
 			dos.flush();
 
@@ -119,12 +113,13 @@ public class HttpFileUploader{
 		}
 		catch (MalformedURLException ex)
 		{
-			Log.e(Tag, "error: " + ex.getMessage(), ex);
+			Log.e(DataCollector.TAG, "URL error: " + ex.getMessage(), ex);
 		}
 
 		catch (IOException ioe)
 		{
-			Log.e(Tag, "error: " + ioe.getMessage(), ioe);
+			Log.e(DataCollector.TAG, "IO error: " + ioe.getMessage(), ioe);
+			throw ioe;
 		}
 	}
 }
