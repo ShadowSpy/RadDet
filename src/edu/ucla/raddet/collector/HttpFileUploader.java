@@ -10,7 +10,7 @@ import java.net.URL;
 
 import android.util.Log;
 
-public class HttpFileUploader{
+public class HttpFileUploader {
 
 	URL connectURL;
 	String params;

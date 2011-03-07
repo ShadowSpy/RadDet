@@ -53,7 +53,8 @@ public class DataCollector extends Service{
     String fileName;
     byte[] dataToServer;  
 	
-    String pathToOurFile = "file_to_send.txt";
+    String logFile = "current.txt";
+    String sendFile = "Data1.txt";
     //Current IP Address
     //String urlServer = "http://192.168.110.121/handle_upload.php";
     
@@ -65,14 +66,14 @@ public class DataCollector extends Service{
         public void onSignalStrengthsChanged(SignalStrength signalStrength) {
         	double p = signalStrength.getCdmaDbm();
         	
-        	if(p > -78)
+        	if(p > -76)
         		sig = 10;
         	else if(p < -98)
         		sig = 0;
         	else
         	{
         		double power = java.lang.Math.pow(10,((p-30)/10));
-        		double upper = -78;
+        		double upper = -76;
         		double lower = -98;
         		//sig = ((power-(java.lang.Math.pow(10,-12)))/(9*java.lang.Math.pow(10,-12)))*10;
         		sig = 10*((power-(java.lang.Math.pow(10,(lower-30)/10)))/(java.lang.Math.pow(10,(upper-30)/10)-java.lang.Math.pow(10,(lower-30)/10)));
@@ -133,7 +134,10 @@ public class DataCollector extends Service{
 				}
 				else {
 					// Check if we have location
-					if (bestLocation == null || (lastLocation != null && bestLocation.getTime() == lastLocation.getTime())) {
+					if (bestLocation == null 
+							|| (lastLocation != null && (bestLocation.getLongitude() == lastLocation.getLongitude() 
+									&& bestLocation.getLatitude() == lastLocation.getLatitude())))
+					{
 						handler.sendEmptyMessageDelayed(0, 5000);
 						return true;
 					}
@@ -159,12 +163,22 @@ public class DataCollector extends Service{
 					
 					Log.i(TAG, "Sending data to server...");
 					Toast.makeText(getApplicationContext(), "Sending data to server...", Toast.LENGTH_LONG).show();
-					File currentFile = new File(getApplicationContext().getFilesDir(),"current.txt");		
-					File newPath = new File(getApplicationContext().getFilesDir(), "temp.txt");
+					File currentFile = new File(getApplicationContext().getFilesDir(),logFile);		
+					File bufferFile = new File(getApplicationContext().getFilesDir(), sendFile);
 					
 					// Rename current.txt file to a new file
-					currentFile.renameTo(newPath);
-					uploadFile("temp.txt", urlServer);
+					
+					//currentFile.setReadOnly();
+					if (copyFile(currentFile, bufferFile))
+						uploadFile(sendFile, urlServer);
+					/*
+					try {
+						currentFile.close();
+						bufferFile.close();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+					*/
 					
 					//Set last location
 					lastLocation = bestLocation;
@@ -174,16 +188,18 @@ public class DataCollector extends Service{
 		);
 			
 		//Set up output file
+		/*
 		boolean fileExists = false;;
 		for (String name : fileList()) {
-			if (name.equals("current.txt")) {
+			if (name.equals(logFile)) {
 				fileExists = true;
 				break;
 			}
 		}
+		*/
 		
 		try {
-			fOut = openFileOutput("current.txt", MODE_WORLD_READABLE);
+			fOut = openFileOutput(logFile, MODE_WORLD_READABLE);
 			Log.d(TAG, "File Created");
 		} catch (FileNotFoundException e) {
 			Log.e(TAG, "Could not open file output");
@@ -191,7 +207,7 @@ public class DataCollector extends Service{
 		}
 		osw = new OutputStreamWriter(fOut);
 		
-		if (!fileExists) {
+		//if (!fileExists) {
 			//Insert row header for CSV file
 			try {
 				osw.write("Lat,Long,Signal,Time\n");
@@ -212,7 +228,7 @@ public class DataCollector extends Service{
 				Log.e(TAG, "Could not open output file");
 				e.printStackTrace();
 			}
-		}
+		//}
 				
 		//Initialize handler
 		handler.sendEmptyMessage(1);
@@ -251,6 +267,34 @@ public class DataCollector extends Service{
 		{
 			//uploadFile(filename, url);
 		}
-		
 	}
+	
+	public boolean copyFile(File src, File dst){
+		FileInputStream in = null;
+		FileOutputStream out = null;
+		
+		try {
+			in = new FileInputStream(src);
+			out = new FileOutputStream(dst);
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+			return false;
+		}
+
+	    // Transfer bytes from in to out
+	    byte[] buf = new byte[1024];
+	    int len;
+	    try  {
+		    while ((len = in.read(buf)) > 0) {
+		        out.write(buf, 0, len);
+		    }
+		    in.close();
+		    out.close();
+		    return true;
+	    } catch (IOException e) {
+	    	e.printStackTrace();
+	    	return false;
+	    }
+	}
+	
 }
