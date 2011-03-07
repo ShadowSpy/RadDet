@@ -1,16 +1,17 @@
 package edu.ucla.raddet.collector;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Calendar;
 
-import android.app.AlarmManager;
-import android.app.PendingIntent;
+//import android.app.AlarmManager;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
@@ -34,7 +35,7 @@ public class DataCollector extends Service{
 	//Service Features		
 	private TelephonyManager Tel;
 	private LocationManager locManager;
-	private AlarmManager alarmManager;
+	//private AlarmManager alarmManager;
 	private Handler handler;
 	private FileOutputStream fOut;
 	private OutputStreamWriter osw;
@@ -55,12 +56,12 @@ public class DataCollector extends Service{
 	
     String logFile = "temp.txt";
     String sendFile = "received.txt";
+    
     //Current IP Address
     //String urlServer = "http://192.168.110.121/handle_upload.php";
     
     //Peter's Home IP Address
     String urlServer = "http://76.89.156.78/handle_upload.php";
-    //String urlServer = "http://192.168.0.197/handle_upload.php";
     
 	private PhoneStateListener signalListener = new PhoneStateListener() {
         public void onSignalStrengthsChanged(SignalStrength signalStrength) {
@@ -120,13 +121,14 @@ public class DataCollector extends Service{
 		locManager = (LocationManager) getSystemService(LOCATION_SERVICE);
 		
 		//Set up alarm manager
-		alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+		//alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
 		
 		//Set up handler
 		handler = new Handler(new Handler.Callback() {
 			public boolean handleMessage(Message msg) {
 				if (msg.what == 1) {
 					// Turns on the location providers
+					Toast.makeText(getApplicationContext(), "Gathering Location Data...", Toast.LENGTH_SHORT).show();
 					locManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locListener);
 					locManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, locListener);
 					bestLocation = locManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
@@ -154,7 +156,7 @@ public class DataCollector extends Service{
 						osw.write(s);
 						osw.flush();
 						Log.d(TAG, "New location added to file");
-						Toast.makeText(getApplicationContext(), "New location added to file", Toast.LENGTH_LONG).show();
+						Toast.makeText(getApplicationContext(), "New location added to file", Toast.LENGTH_SHORT).show();
 					} catch (IOException e) {
 						Log.e(TAG, "Problem with file writing");
 						e.printStackTrace();
@@ -167,18 +169,8 @@ public class DataCollector extends Service{
 					File bufferFile = new File(getApplicationContext().getFilesDir(), sendFile);
 					
 					// Rename current.txt file to a new file
-					
-					//currentFile.setReadOnly();
 					if (copyFile(currentFile, bufferFile))
 						uploadFile(sendFile, urlServer);
-					/*
-					try {
-						currentFile.close();
-						bufferFile.close();
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-					*/
 					
 					//Set last location
 					lastLocation = bestLocation;
@@ -186,17 +178,6 @@ public class DataCollector extends Service{
 				return true;
 			}}
 		);
-			
-		//Set up output file
-		/*
-		boolean fileExists = false;;
-		for (String name : fileList()) {
-			if (name.equals(logFile)) {
-				fileExists = true;
-				break;
-			}
-		}
-		*/
 		
 		try {
 			fOut = openFileOutput(logFile, MODE_WORLD_READABLE);
@@ -207,7 +188,54 @@ public class DataCollector extends Service{
 		}
 		osw = new OutputStreamWriter(fOut);
 		
-		//if (!fileExists) {
+		try {
+		    // Create a URL for the desired page
+		    URL syncURL = new URL("http://76.89.156.78/uploads/" + sendFile);
+
+		    // Read all the text returned by the server
+		    BufferedReader syncIn = new BufferedReader(new InputStreamReader(syncURL.openStream()));
+		    String str = syncIn.readLine();
+		    while (str != null) {
+		    	osw.write(str + '\n');
+		    	str = syncIn.readLine();
+		    }
+		    syncIn.close();
+		    osw.flush();
+			Toast.makeText(getApplicationContext(), "Existing Data File Sucessfully Retreived from Server", Toast.LENGTH_LONG).show();
+		} catch (MalformedURLException e) {
+			Log.e(TAG, "Bad Server File URL");
+		} catch (IOException e) {
+			Log.e(TAG, "Server File IOE");
+			try {
+				osw.write("Lat,Long,Signal,Time\n");
+				osw.flush();
+				Toast.makeText(getApplicationContext(), "Server Data File Does Not Exist. Creating New File.", Toast.LENGTH_LONG).show();
+			} catch (IOException e1) {
+				Log.e(TAG, "Could not open output file");
+				e1.printStackTrace();
+			}
+		}
+			
+		//Set up output file
+/*
+		boolean fileExists = false;;
+		for (String name : fileList()) {
+			if (name.equals(logFile)) {
+				fileExists = true;
+				break;
+			}
+		}
+		try {
+			fOut = openFileOutput(logFile, MODE_WORLD_READABLE);
+			Log.d(TAG, "File Created");
+		} catch (FileNotFoundException e) {
+			Log.e(TAG, "Could not open file output");
+			e.printStackTrace();
+		}
+		
+		osw = new OutputStreamWriter(fOut);
+		
+		if (!fileExists) {
 			//Insert row header for CSV file
 			try {
 				osw.write("Lat,Long,Signal,Time\n");
@@ -228,8 +256,9 @@ public class DataCollector extends Service{
 				Log.e(TAG, "Could not open output file");
 				e.printStackTrace();
 			}
-		//}
-				
+		}
+*/
+		
 		//Initialize handler
 		handler.sendEmptyMessage(1);
 		Log.i(TAG, "DataCollector started");
@@ -262,10 +291,6 @@ public class DataCollector extends Service{
 			htfu.doStart(fis, filename);
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
-		}
-		catch(IOException ioe)
-		{
-			//uploadFile(filename, url);
 		}
 	}
 	

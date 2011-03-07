@@ -30,7 +30,7 @@ public class HttpFileUploader {
 
 	}
 
-	void doStart(FileInputStream stream, String filename) throws IOException{ 
+	void doStart(FileInputStream stream, String filename){ 
 		fileInputStream = stream;
 		String exsistingFileName = filename;
 
@@ -119,7 +119,6 @@ public class HttpFileUploader {
 		catch (IOException ioe)
 		{
 			Log.e(DataCollector.TAG, "IO error: " + ioe.getMessage(), ioe);
-			throw ioe;
 		}
 	}
 }
