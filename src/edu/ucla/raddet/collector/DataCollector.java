@@ -30,9 +30,7 @@ import android.widget.Toast;
 //Android Service which collects radiation information, as well as GPS information
 public class DataCollector extends Service{
 
-	//Service Features
-	public static final long UPDATE_INTERVAL = 30000L;	//Frequency of GPS location updates
-		
+	//Service Features		
 	private TelephonyManager Tel;
 	private LocationManager locManager;
 	private AlarmManager alarmManager;
@@ -42,6 +40,7 @@ public class DataCollector extends Service{
 
 	private double sig; // Valid values are 0-10
 	private Location bestLocation;
+	private Location lastLocation;
 	
 	private static final String TAG = "RadDet";
 	
@@ -125,7 +124,7 @@ public class DataCollector extends Service{
 				}
 				else {
 					// Check if we have location
-					if (bestLocation == null) {
+					if (bestLocation == null || bestLocation == lastLocation) {
 						handler.sendEmptyMessageDelayed(0, 10000);
 						return true;
 					}
@@ -150,6 +149,9 @@ public class DataCollector extends Service{
 					Log.i(TAG, "Sending data to server...");
 					Toast.makeText(getApplicationContext(), "Sending data to server...", Toast.LENGTH_LONG).show();
 					uploadFile("current.txt", urlServer);
+					
+					//Set last location
+					lastLocation = bestLocation;
 				}
 				return true;
 			}}
