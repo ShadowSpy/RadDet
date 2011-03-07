@@ -23,6 +23,9 @@ public class DataPrep extends BroadcastReceiver {
 	public void onReceive(Context context, Intent intent) {
 		// TODO 
 		File currentFile = new File(context.getFilesDir(),"current.txt");
+		
+		//Find file that does not exist
+		
 		File newPath = new File(context.getFilesDir(), "raddet" + format.format(new Date()) + ".csv");
 		
 		// Rename current.txt file to a new file

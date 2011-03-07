@@ -41,6 +41,7 @@ public class DataCollector extends Service{
 	private double sig; // Valid values are 0-10
 	private Location bestLocation;
 	private Location lastLocation;
+	private boolean isFirstUpdate;
 	
 	private static final String TAG = "RadDet";
 	
@@ -63,14 +64,17 @@ public class DataCollector extends Service{
         public void onSignalStrengthsChanged(SignalStrength signalStrength) {
         	double p = signalStrength.getCdmaDbm();
         	
-        	if(p > -80)
+        	if(p > -78)
         		sig = 10;
-        	else if(p < -90)
+        	else if(p < -98)
         		sig = 0;
         	else
         	{
         		double power = java.lang.Math.pow(10,((p-30)/10));
-        		sig = ((power-(java.lang.Math.pow(10,-12)))/(9*java.lang.Math.pow(10,-12)))*10;
+        		double lower = -78;
+        		double upper = -98;
+        		//sig = ((power-(java.lang.Math.pow(10,-12)))/(9*java.lang.Math.pow(10,-12)))*10;
+        		sig = 10*((power-(java.lang.Math.pow(10,(lower-30)/10)))/(java.lang.Math.pow(10,(upper-30)/10)-java.lang.Math.pow(10,(lower-30)/10)));
         	}
         	Log.d(TAG, "New Signal Strength: " + p + " dBm" + "& " + sig + " ratio");
         }
@@ -78,6 +82,10 @@ public class DataCollector extends Service{
 
 	private LocationListener locListener = new LocationListener() {
 		public void onLocationChanged(Location loc) {
+			if(isFirstUpdate) {
+				handler.sendEmptyMessageDelayed(0, 5000);	// Receive locations for five seconds
+				isFirstUpdate = false;
+			}
 			//Keep track of best location
 			//Having a location > no location
 			if (bestLocation == null)
@@ -120,12 +128,12 @@ public class DataCollector extends Service{
 					locManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locListener);
 					locManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, locListener);
 					bestLocation = locManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-					handler.sendEmptyMessageDelayed(0, 5000);	// Receive locations for five seconds
+					isFirstUpdate = true;
 				}
 				else {
 					// Check if we have location
-					if (bestLocation == null || bestLocation == lastLocation) {
-						handler.sendEmptyMessageDelayed(0, 10000);
+					if (bestLocation == null || (lastLocation != null && bestLocation.getTime() == lastLocation.getTime())) {
+						handler.sendEmptyMessageDelayed(0, 5000);
 						return true;
 					}
 					
@@ -140,6 +148,7 @@ public class DataCollector extends Service{
 					try {
 						osw.write(s);
 						osw.flush();
+						Toast.makeText(getApplicationContext(), "New location added to file", Toast.LENGTH_LONG).show();
 					} catch (IOException e) {
 						Log.e(TAG, "Problem with file writing");
 						e.printStackTrace();
@@ -167,7 +176,7 @@ public class DataCollector extends Service{
 		}
 		
 		try {
-			fOut = openFileOutput("current.txt", MODE_WORLD_READABLE | MODE_APPEND);
+			fOut = openFileOutput("current.txt", MODE_WORLD_READABLE);
 		} catch (FileNotFoundException e) {
 			Log.e(TAG, "Could not open file output");
 			e.printStackTrace();
