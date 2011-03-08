@@ -99,7 +99,7 @@ public class DataCollector extends Service{
 				bestLocation = loc;
 			//More accuracy > Less accuracy
 			else if (bestLocation.getProvider().equals(loc.getProvider())) {
-				if (loc.getAccuracy() <= bestLocation.getAccuracy())
+				if (bestLocation.distanceTo(loc) > loc.getAccuracy())
 					bestLocation = loc;
 			}
 			Log.d(TAG, "Best location is currently: " + bestLocation.getLatitude() + ", " + bestLocation.getLongitude() + " Type of network: " + bestLocation.getProvider());
