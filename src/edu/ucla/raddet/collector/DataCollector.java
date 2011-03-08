@@ -98,9 +98,8 @@ public class DataCollector extends Service{
 					 loc.getProvider().equals(LocationManager.GPS_PROVIDER))
 				bestLocation = loc;
 			//More accuracy > Less accuracy
-			else if (bestLocation.getProvider().equals(loc.getProvider())) {
-				if (bestLocation.distanceTo(loc) > loc.getAccuracy())
-					bestLocation = loc;
+			else if (bestLocation.distanceTo(loc) > loc.getAccuracy()) {
+				bestLocation = loc;
 			}
 			Log.d(TAG, "Best location is currently: " + bestLocation.getLatitude() + ", " + bestLocation.getLongitude() + " Type of network: " + bestLocation.getProvider());
 		}
